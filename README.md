@@ -4,15 +4,55 @@ A self-hosted, cross-platform meal planning application with AI-powered features
 
 ## Features
 
-- 🍳 **Recipe Management** - Create, store, and organize your recipes
-- 📅 **Meal Planning** - Plan your meals for the week or month
-- 🏪 **Pantry Tracking** - Keep track of ingredients and expiration dates
-- 📝 **Shopping Lists** - Auto-generate shopping lists from meal plans
-- 📊 **Nutrition Tracking** - Monitor your nutritional intake
-- 🤖 **AI Integration** - Recipe suggestions, meal plan generation, and more
-- 📱 **Cross-Platform** - iOS, Android, Web, and Desktop support
+### Recipe Management
+- ✅ Create, edit, and delete recipes with full details
+- ✅ Upload recipe images (local or S3 storage)
+- ✅ Import recipes from URLs with automatic scraping
+- ✅ Organize with categories and tags
+- ✅ Full-text search across recipes
+- ✅ Nutrition information per recipe
+
+### Meal Planning
+- ✅ Create meal plans for any date range
+- ✅ Schedule meals by type (breakfast, lunch, dinner, snack)
+- ✅ Household sharing for family meal planning
+- ✅ AI-powered meal plan generation
+
+### Pantry & Shopping
+- ✅ Track pantry inventory with expiration dates
+- ✅ Auto-generate shopping lists from meal plans
+- ✅ Toggle items as completed
+- ✅ Organize by categories and locations
+- ✅ Household-shared pantry and shopping lists
+
+### Nutrition Tracking
+- ✅ Log meals and nutrition daily
+- ✅ View daily and weekly nutrition summaries
+- ✅ USDA FoodData Central integration
+- ✅ Search 300,000+ foods for accurate nutrition data
+- ✅ AI-powered nutrition analysis
+
+### AI Integration (Multi-Provider)
+- ✅ Recipe suggestions based on ingredients
+- ✅ Recipe variations (vegetarian, low-carb, etc.)
+- ✅ Ingredient substitution suggestions
+- ✅ Nutrition analysis and recommendations
+- ✅ AI meal plan generation
+- ✅ Support for Ollama, OpenAI, Gemini, and Claude
+
+### Household Sharing
+- ✅ Create households for families
+- ✅ Role-based access (owner, admin, member)
+- ✅ Share recipes, meal plans, pantry, and shopping lists
+- ✅ Collaborative meal planning
+
+### Technical Features
 - 🔒 **Self-Hosted** - Your data stays on your server
-- 🔄 **Offline-First** - Works without internet connection
+- 🛡️ **Secure** - Argon2id password hashing, JWT authentication
+- 📦 **Easy Deployment** - Docker Compose with auto-SSL via Caddy
+- 🔌 **Pluggable** - Modular database and AI providers
+- 📱 **API-First** - Complete REST API for integrations
+- 📝 **Well-Documented** - Comprehensive API and deployment docs
 
 ## Architecture
 
@@ -169,21 +209,29 @@ space-food/
 └── docs/                # Documentation
 ```
 
-## API Documentation
+## Documentation
 
-The REST API is available at `/api/v1`. Key endpoints:
+- **[API Reference](API.md)** - Complete REST API documentation
+- **[Deployment Guide](DEPLOYMENT.md)** - Deploy to production
+- **[Configuration Reference](CONFIGURATION.md)** - All configuration options
+- **[Troubleshooting](TROUBLESHOOTING.md)** - Common issues and solutions
+- **[Contributing Guide](CONTRIBUTING.md)** - How to contribute
+- **[Implementation Plan](implementation-plan.md)** - Development roadmap
 
-### Authentication
-- `POST /api/v1/auth/register` - Register new user
-- `POST /api/v1/auth/login` - Login
-- `POST /api/v1/auth/refresh` - Refresh token
+### Quick API Reference
 
-### Recipes
-- `GET /api/v1/recipes` - List recipes
-- `POST /api/v1/recipes` - Create recipe
-- `GET /api/v1/recipes/:id` - Get recipe
-- `PUT /api/v1/recipes/:id` - Update recipe
-- `DELETE /api/v1/recipes/:id` - Delete recipe
+The REST API is available at `/api/v1`. Key endpoint categories:
+
+- **Authentication** - Register, login, token refresh
+- **Recipes** - Full CRUD, search, import from URL, image upload
+- **Meal Planning** - Create and manage meal plans
+- **Pantry** - Track inventory and expiration dates
+- **Shopping Lists** - Generate and manage shopping lists
+- **Nutrition** - Log meals, view summaries, search USDA database
+- **Households** - Family sharing and collaboration
+- **AI Features** - Recipe suggestions, meal plans, nutrition analysis
+
+See [API.md](API.md) for complete endpoint documentation with request/response examples.
 
 ## Development
 
@@ -205,25 +253,58 @@ flutter test
 
 We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
-## Roadmap
+## Implementation Status
 
-See [implementation-plan.md](implementation-plan.md) for the complete development roadmap.
+### ✅ Phase 1: Foundation (Complete)
+- ✅ Go backend with Gin framework
+- ✅ PostgreSQL and SQLite database support
+- ✅ Argon2id authentication with JWT
+- ✅ Database migrations
+- ✅ Docker deployment configuration
+- ✅ Flutter project scaffolding
 
-### Current Status: Phase 1 (Foundation)
-- ✅ Project structure
-- ✅ Database abstraction layer
-- ✅ Authentication system
-- ✅ Basic API endpoints
-- ✅ Flutter project setup
-- 🚧 Recipe management UI
-- 🚧 Meal planning features
+### ✅ Phase 2: Core Features (Complete)
+- ✅ Recipe management API (CRUD, search)
+- ✅ Meal planning API with date ranges
+- ✅ Pantry management API
+- ✅ Shopping list API with toggle completion
+- ✅ Nutrition tracking API with daily summaries
 
-### Coming Soon
-- Meal planning and calendar
-- Nutrition tracking
-- AI-powered features
-- Multi-user households
-- Mobile barcode scanning
+### ✅ Phase 3: AI Integration (Complete)
+- ✅ AI provider abstraction layer
+- ✅ Ollama integration (local/privacy-focused)
+- ✅ OpenAI integration (GPT-3.5/GPT-4)
+- ✅ Google Gemini integration
+- ✅ Anthropic Claude integration
+- ✅ Recipe suggestions and variations
+- ✅ AI meal plan generation
+- ✅ Nutrition analysis
+
+### ✅ Phase 4: Advanced Features (Complete)
+- ✅ Recipe URL import with web scraping
+- ✅ USDA FoodData Central integration
+- ✅ Image upload (local and S3 storage)
+- ✅ Household/family sharing
+- ✅ Role-based access control
+
+### 🚧 Phase 5: Launch Preparation (In Progress)
+- ✅ API documentation
+- ✅ Deployment guide
+- ✅ Configuration reference
+- ✅ Troubleshooting guide
+- ⏳ Community setup
+- ⏳ Mobile app implementation
+- ⏳ Beta testing
+
+### Coming in Future Releases
+- 📱 Full-featured mobile app (Flutter)
+- 📱 Mobile barcode scanning
+- 🔄 Offline-first data sync
+- 🔐 OAuth2 authentication
+- 🗄️ Supabase integration plugin
+- 📊 Advanced nutrition analytics
+- 🎨 Recipe image editing
+- 🌍 Multi-language support
 
 ## License
 
@@ -239,9 +320,14 @@ See [LICENSE](LICENSE) for full details.
 
 ## Support
 
-- 📖 [Documentation](docs/)
+- 📖 **Documentation**
+  - [API Reference](API.md)
+  - [Deployment Guide](DEPLOYMENT.md)
+  - [Configuration](CONFIGURATION.md)
+  - [Troubleshooting](TROUBLESHOOTING.md)
 - 🐛 [Issue Tracker](https://github.com/rghsoftware/space-food/issues)
 - 💬 [Discussions](https://github.com/rghsoftware/space-food/discussions)
+- 📝 [Contributing Guide](CONTRIBUTING.md)
 
 ## Acknowledgments
 
