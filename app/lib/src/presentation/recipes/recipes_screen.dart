@@ -6,9 +6,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import '../providers/recipe_provider.dart';
 import '../../data/models/recipe.dart';
+import '../../core/constants/offline_capabilities.dart';
+import '../widgets/swipeable_recipe_card.dart';
+import '../widgets/pull_to_refresh_wrapper.dart';
+import '../widgets/offline_banner.dart';
+import '../widgets/offline_aware_button.dart';
 
 class RecipesScreen extends HookConsumerWidget {
   const RecipesScreen({super.key});
@@ -26,6 +30,8 @@ class RecipesScreen extends HookConsumerWidget {
       appBar: AppBar(
         title: const Text('Recipes'),
         actions: [
+          const OfflineIndicator(),
+          const SizedBox(width: 8),
           IconButton(
             icon: const Icon(Icons.add),
             onPressed: () {
@@ -36,6 +42,7 @@ class RecipesScreen extends HookConsumerWidget {
       ),
       body: Column(
         children: [
+          const OfflineBanner(),
           // Search bar
           Padding(
             padding: const EdgeInsets.all(16.0),
@@ -71,41 +78,98 @@ class RecipesScreen extends HookConsumerWidget {
             child: recipesAsync.when(
               data: (recipes) {
                 if (recipes.isEmpty) {
-                  return Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
+                  return OfflineAwarePullToRefresh(
+                    onRefresh: () async {
+                      ref.invalidate(recipesProvider);
+                      await ref.read(recipesProvider.future);
+                    },
+                    child: ListView(
                       children: [
-                        Icon(
-                          Icons.restaurant_menu,
-                          size: 64,
-                          color: Colors.grey[400],
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          searchQuery.value.isEmpty
-                              ? 'No recipes yet'
-                              : 'No recipes found',
-                          style: Theme.of(context).textTheme.titleLarge,
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          searchQuery.value.isEmpty
-                              ? 'Tap + to create your first recipe'
-                              : 'Try a different search',
-                          style: Theme.of(context).textTheme.bodyMedium,
+                        SizedBox(
+                          height: MediaQuery.of(context).size.height * 0.6,
+                          child: Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.restaurant_menu,
+                                  size: 64,
+                                  color: Colors.grey[400],
+                                ),
+                                const SizedBox(height: 16),
+                                Text(
+                                  searchQuery.value.isEmpty
+                                      ? 'No recipes yet'
+                                      : 'No recipes found',
+                                  style: Theme.of(context).textTheme.titleLarge,
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  searchQuery.value.isEmpty
+                                      ? 'Tap + to create your first recipe'
+                                      : 'Try a different search',
+                                  style: Theme.of(context).textTheme.bodyMedium,
+                                ),
+                              ],
+                            ),
+                          ),
                         ),
                       ],
                     ),
                   );
                 }
 
-                return ListView.builder(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  itemCount: recipes.length,
-                  itemBuilder: (context, index) {
-                    final recipe = recipes[index];
-                    return _RecipeCard(recipe: recipe);
+                return OfflineAwarePullToRefresh(
+                  onRefresh: () async {
+                    ref.invalidate(recipesProvider);
+                    await ref.read(recipesProvider.future);
                   },
+                  child: ListView.builder(
+                    itemCount: recipes.length,
+                    itemBuilder: (context, index) {
+                      final recipe = recipes[index];
+                      return SwipeableRecipeCard(
+                        recipe: recipe,
+                        onTap: () => context.push('/recipes/${recipe.id}'),
+                        onEdit: () => context.push('/recipes/${recipe.id}/edit'),
+                        onDelete: () async {
+                          final repository = ref.read(recipeRepositoryProvider);
+                          final result = await repository.deleteRecipe(recipe.id);
+
+                          result.fold(
+                            (error) {
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text('Failed to delete: $error'),
+                                    backgroundColor: Colors.red,
+                                  ),
+                                );
+                              }
+                            },
+                            (_) {
+                              ref.invalidate(recipesProvider);
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Recipe deleted'),
+                                  ),
+                                );
+                              }
+                            },
+                          );
+                        },
+                        onAddToMealPlan: () {
+                          // TODO: Implement add to meal plan
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Add to meal plan coming soon!'),
+                            ),
+                          );
+                        },
+                      );
+                    },
+                  ),
                 );
               },
               loading: () => const Center(
@@ -159,13 +223,18 @@ class RecipesScreen extends HookConsumerWidget {
                       context.push('/recipes/create');
                     },
                   ),
-                  ListTile(
-                    leading: const Icon(Icons.link),
-                    title: const Text('Import from URL'),
-                    onTap: () {
+                  OfflineAwareButton(
+                    offlineCapability: FeatureOfflineCapabilities.importRecipe,
+                    offlineMessage: 'Recipe import requires internet connection',
+                    elevated: false,
+                    onPressed: () {
                       Navigator.pop(context);
                       _showImportDialog(context, ref);
                     },
+                    child: const ListTile(
+                      leading: Icon(Icons.link),
+                      title: Text('Import from URL'),
+                    ),
                   ),
                 ],
               ),
@@ -198,7 +267,9 @@ class RecipesScreen extends HookConsumerWidget {
             onPressed: () => Navigator.pop(context),
             child: const Text('Cancel'),
           ),
-          ElevatedButton(
+          OfflineAwareButton(
+            offlineCapability: FeatureOfflineCapabilities.importRecipe,
+            offlineMessage: 'Recipe import requires internet connection',
             onPressed: () async {
               if (controller.text.isEmpty) return;
 
@@ -239,151 +310,3 @@ class RecipesScreen extends HookConsumerWidget {
   }
 }
 
-class _RecipeCard extends StatelessWidget {
-  final Recipe recipe;
-
-  const _RecipeCard({required this.recipe});
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      child: InkWell(
-        onTap: () {
-          context.push('/recipes/${recipe.id}');
-        },
-        borderRadius: BorderRadius.circular(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Image
-            if (recipe.imageUrl != null)
-              ClipRRect(
-                borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(12),
-                ),
-                child: AspectRatio(
-                  aspectRatio: 16 / 9,
-                  child: CachedNetworkImage(
-                    imageUrl: recipe.imageUrl!,
-                    fit: BoxFit.cover,
-                    placeholder: (context, url) => Container(
-                      color: Colors.grey[300],
-                      child: const Center(
-                        child: CircularProgressIndicator(),
-                      ),
-                    ),
-                    errorWidget: (context, url, error) => Container(
-                      color: Colors.grey[300],
-                      child: const Icon(Icons.broken_image, size: 48),
-                    ),
-                  ),
-                ),
-              ),
-
-            // Content
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Title
-                  Text(
-                    recipe.title,
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
-                  ),
-                  const SizedBox(height: 8),
-
-                  // Description
-                  Text(
-                    recipe.description,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context).textTheme.bodyMedium,
-                  ),
-                  const SizedBox(height: 12),
-
-                  // Metadata
-                  Wrap(
-                    spacing: 16,
-                    runSpacing: 8,
-                    children: [
-                      _MetadataChip(
-                        icon: Icons.timer,
-                        label: '${recipe.prepTime + recipe.cookTime} min',
-                      ),
-                      _MetadataChip(
-                        icon: Icons.people,
-                        label: '${recipe.servings} servings',
-                      ),
-                      _MetadataChip(
-                        icon: Icons.signal_cellular_alt,
-                        label: recipe.difficulty,
-                      ),
-                      if (recipe.rating > 0)
-                        _MetadataChip(
-                          icon: Icons.star,
-                          label: recipe.rating.toStringAsFixed(1),
-                        ),
-                    ],
-                  ),
-
-                  // Categories
-                  if (recipe.categories.isNotEmpty) ...[
-                    const SizedBox(height: 12),
-                    Wrap(
-                      spacing: 8,
-                      children: recipe.categories
-                          .take(3)
-                          .map(
-                            (category) => Chip(
-                              label: Text(
-                                category,
-                                style: const TextStyle(fontSize: 12),
-                              ),
-                              materialTapTargetSize:
-                                  MaterialTapTargetSize.shrinkWrap,
-                            ),
-                          )
-                          .toList(),
-                    ),
-                  ],
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _MetadataChip extends StatelessWidget {
-  final IconData icon;
-  final String label;
-
-  const _MetadataChip({
-    required this.icon,
-    required this.label,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(icon, size: 16, color: Colors.grey[600]),
-        const SizedBox(width: 4),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 12,
-            color: Colors.grey[600],
-          ),
-        ),
-      ],
-    );
-  }
-}

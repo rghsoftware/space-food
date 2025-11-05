@@ -8,6 +8,9 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../data/models/shopping_list.dart';
 import '../providers/shopping_list_provider.dart';
+import '../widgets/swipeable_recipe_card.dart';
+import '../widgets/pull_to_refresh_wrapper.dart';
+import '../widgets/offline_banner.dart';
 
 class ShoppingListScreen extends HookConsumerWidget {
   const ShoppingListScreen({super.key});
@@ -20,6 +23,8 @@ class ShoppingListScreen extends HookConsumerWidget {
       appBar: AppBar(
         title: const Text('Shopping List'),
         actions: [
+          const OfflineIndicator(),
+          const SizedBox(width: 8),
           PopupMenuButton<String>(
             onSelected: (value) async {
               if (value == 'clear_completed') {
@@ -65,73 +70,100 @@ class ShoppingListScreen extends HookConsumerWidget {
           ),
         ],
       ),
-      body: shoppingListAsync.when(
-        data: (items) {
-          if (items.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.shopping_cart_outlined,
-                    size: 64,
-                    color: Colors.grey[400],
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Shopping list is empty',
-                    style: Theme.of(context).textTheme.titleLarge,
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Tap + to add items',
-                    style: Theme.of(context).textTheme.bodyMedium,
-                  ),
-                ],
-              ),
-            );
-          }
+      body: Column(
+        children: [
+          const OfflineBanner(),
+          Expanded(
+            child: shoppingListAsync.when(
+              data: (items) {
+                if (items.isEmpty) {
+                  return PullToRefreshWrapper(
+                    onRefresh: () async {
+                      ref.invalidate(shoppingListItemsProvider);
+                      await ref.read(shoppingListItemsProvider.future);
+                    },
+                    child: ListView(
+                      children: [
+                        SizedBox(
+                          height: MediaQuery.of(context).size.height * 0.6,
+                          child: Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.shopping_cart_outlined,
+                                  size: 64,
+                                  color: Colors.grey[400],
+                                ),
+                                const SizedBox(height: 16),
+                                Text(
+                                  'Shopping list is empty',
+                                  style: Theme.of(context).textTheme.titleLarge,
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  'Tap + to add items',
+                                  style: Theme.of(context).textTheme.bodyMedium,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }
 
-          final incomplete = items.where((item) => !item.completed).toList();
-          final completed = items.where((item) => item.completed).toList();
+                final incomplete = items.where((item) => !item.completed).toList();
+                final completed = items.where((item) => item.completed).toList();
 
-          return ListView(
-            padding: const EdgeInsets.all(16),
-            children: [
-              if (incomplete.isNotEmpty) ...[
-                Text(
-                  'To Buy (${incomplete.length})',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                ),
-                const SizedBox(height: 8),
-                ...incomplete.map((item) => _ShoppingListItemCard(
-                      item: item,
-                      onToggle: () => _toggleItem(context, ref, item.id),
-                      onDelete: () => _deleteItem(context, ref, item.id),
-                    )),
-              ],
-              if (incomplete.isNotEmpty && completed.isNotEmpty)
-                const SizedBox(height: 24),
-              if (completed.isNotEmpty) ...[
-                Text(
-                  'Completed (${completed.length})',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: Colors.grey,
-                      ),
-                ),
-                const SizedBox(height: 8),
-                ...completed.map((item) => _ShoppingListItemCard(
-                      item: item,
-                      onToggle: () => _toggleItem(context, ref, item.id),
-                      onDelete: () => _deleteItem(context, ref, item.id),
-                    )),
-              ],
-            ],
-          );
-        },
+                return PullToRefreshWrapper(
+                  onRefresh: () async {
+                    ref.invalidate(shoppingListItemsProvider);
+                    await ref.read(shoppingListItemsProvider.future);
+                  },
+                  child: ListView(
+                    padding: const EdgeInsets.all(16),
+                    children: [
+                      if (incomplete.isNotEmpty) ...[
+                        Text(
+                          'To Buy (${incomplete.length})',
+                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                fontWeight: FontWeight.bold,
+                              ),
+                        ),
+                        const SizedBox(height: 8),
+                        ...incomplete.map((item) => SwipeableShoppingItemCard(
+                              id: item.id,
+                              name: '${item.quantity} ${item.unit} ${item.name}',
+                              completed: item.completed,
+                              onToggle: () => _toggleItem(context, ref, item.id),
+                              onDelete: () => _deleteItem(context, ref, item.id),
+                            )),
+                      ],
+                      if (incomplete.isNotEmpty && completed.isNotEmpty)
+                        const SizedBox(height: 24),
+                      if (completed.isNotEmpty) ...[
+                        Text(
+                          'Completed (${completed.length})',
+                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                fontWeight: FontWeight.bold,
+                                color: Colors.grey,
+                              ),
+                        ),
+                        const SizedBox(height: 8),
+                        ...completed.map((item) => SwipeableShoppingItemCard(
+                              id: item.id,
+                              name: '${item.quantity} ${item.unit} ${item.name}',
+                              completed: item.completed,
+                              onToggle: () => _toggleItem(context, ref, item.id),
+                              onDelete: () => _deleteItem(context, ref, item.id),
+                            )),
+                      ],
+                    ],
+                  ),
+                );
+              },
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, stack) => Center(
           child: Column(
@@ -160,6 +192,9 @@ class ShoppingListScreen extends HookConsumerWidget {
             ],
           ),
         ),
+            ),
+          ),
+        ],
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _showAddItemDialog(context, ref),
@@ -351,91 +386,3 @@ class ShoppingListScreen extends HookConsumerWidget {
   }
 }
 
-class _ShoppingListItemCard extends StatelessWidget {
-  final ShoppingListItem item;
-  final VoidCallback onToggle;
-  final VoidCallback onDelete;
-
-  const _ShoppingListItemCard({
-    required this.item,
-    required this.onToggle,
-    required this.onDelete,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 8),
-      child: ListTile(
-        leading: Checkbox(
-          value: item.completed,
-          onChanged: (_) => onToggle(),
-        ),
-        title: Text(
-          item.name,
-          style: TextStyle(
-            decoration: item.completed ? TextDecoration.lineThrough : null,
-            color: item.completed ? Colors.grey : null,
-          ),
-        ),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              '${item.quantity} ${item.unit}',
-              style: TextStyle(
-                color: item.completed ? Colors.grey : null,
-              ),
-            ),
-            if (item.category.isNotEmpty)
-              Text(
-                item.category,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: item.completed
-                      ? Colors.grey
-                      : Theme.of(context).colorScheme.primary,
-                ),
-              ),
-            if (item.notes.isNotEmpty)
-              Text(
-                item.notes,
-                style: TextStyle(
-                  fontSize: 12,
-                  fontStyle: FontStyle.italic,
-                  color: Colors.grey[600],
-                ),
-              ),
-          ],
-        ),
-        trailing: IconButton(
-          icon: const Icon(Icons.delete, color: Colors.red),
-          onPressed: () async {
-            final confirm = await showDialog<bool>(
-              context: context,
-              builder: (context) => AlertDialog(
-                title: const Text('Delete Item'),
-                content: Text('Delete "${item.name}"?'),
-                actions: [
-                  TextButton(
-                    onPressed: () => Navigator.pop(context, false),
-                    child: const Text('Cancel'),
-                  ),
-                  TextButton(
-                    onPressed: () => Navigator.pop(context, true),
-                    style: TextButton.styleFrom(foregroundColor: Colors.red),
-                    child: const Text('Delete'),
-                  ),
-                ],
-              ),
-            );
-
-            if (confirm == true) {
-              onDelete();
-            }
-          },
-        ),
-      ),
-    );
-  }
-}
