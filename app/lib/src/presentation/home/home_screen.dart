@@ -53,10 +53,7 @@ class HomeScreen extends HookConsumerWidget {
             subtitle: 'Plan your meals',
             color: Colors.blue,
             onTap: () {
-              // TODO: Navigate to meal plans
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Meal Plans feature coming soon')),
-              );
+              context.push('/meal-plans');
             },
           ),
           _buildFeatureCard(
@@ -66,10 +63,7 @@ class HomeScreen extends HookConsumerWidget {
             subtitle: 'Track your ingredients',
             color: Colors.green,
             onTap: () {
-              // TODO: Navigate to pantry
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Pantry feature coming soon')),
-              );
+              context.push('/pantry');
             },
           ),
           _buildFeatureCard(
@@ -79,10 +73,7 @@ class HomeScreen extends HookConsumerWidget {
             subtitle: 'Your shopping lists',
             color: Colors.purple,
             onTap: () {
-              // TODO: Navigate to shopping
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Shopping feature coming soon')),
-              );
+              context.push('/shopping-list');
             },
           ),
           _buildFeatureCard(
@@ -92,10 +83,7 @@ class HomeScreen extends HookConsumerWidget {
             subtitle: 'Track your nutrition',
             color: Colors.red,
             onTap: () {
-              // TODO: Navigate to nutrition
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Nutrition feature coming soon')),
-              );
+              context.push('/nutrition');
             },
           ),
           _buildFeatureCard(
