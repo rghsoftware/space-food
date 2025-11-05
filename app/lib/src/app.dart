@@ -8,6 +8,9 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'presentation/auth/login_screen.dart';
 import 'presentation/auth/register_screen.dart';
 import 'presentation/home/home_screen.dart';
+import 'presentation/recipes/recipes_screen.dart';
+import 'presentation/recipes/recipe_detail_screen.dart';
+import 'presentation/recipes/recipe_form_screen.dart';
 import 'presentation/providers/auth_provider.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
@@ -40,6 +43,29 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/home',
         builder: (context, state) => const HomeScreen(),
+      ),
+      GoRoute(
+        path: '/recipes',
+        builder: (context, state) => const RecipesScreen(),
+      ),
+      GoRoute(
+        path: '/recipes/create',
+        builder: (context, state) => const RecipeFormScreen(),
+      ),
+      GoRoute(
+        path: '/recipes/:id',
+        builder: (context, state) {
+          final id = state.pathParameters['id']!;
+          return RecipeDetailScreen(recipeId: id);
+        },
+      ),
+      GoRoute(
+        path: '/recipes/:id/edit',
+        builder: (context, state) {
+          final id = state.pathParameters['id']!;
+          // TODO: Load recipe and pass to form
+          return RecipeFormScreen(recipeId: id);
+        },
       ),
     ],
   );

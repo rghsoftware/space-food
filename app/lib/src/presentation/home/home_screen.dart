@@ -43,10 +43,7 @@ class HomeScreen extends HookConsumerWidget {
             subtitle: 'Browse and manage recipes',
             color: Colors.orange,
             onTap: () {
-              // TODO: Navigate to recipes
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Recipes feature coming soon')),
-              );
+              context.push('/recipes');
             },
           ),
           _buildFeatureCard(
