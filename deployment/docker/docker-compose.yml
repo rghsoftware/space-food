@@ -1,0 +1,77 @@
+version: '3.8'
+
+services:
+  # PostgreSQL database
+  postgres:
+    image: postgres:16-alpine
+    container_name: space-food-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-space_food}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
+      POSTGRES_DB: ${POSTGRES_DB:-space_food}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-space_food}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Backend API
+  backend:
+    build:
+      context: ../../backend
+      dockerfile: Dockerfile
+    container_name: space-food-backend
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      SPACE_FOOD_SERVER_HOST: 0.0.0.0
+      SPACE_FOOD_SERVER_PORT: 8080
+      SPACE_FOOD_DATABASE_TYPE: postgres
+      SPACE_FOOD_DATABASE_HOST: postgres
+      SPACE_FOOD_DATABASE_PORT: 5432
+      SPACE_FOOD_DATABASE_NAME: ${POSTGRES_DB:-space_food}
+      SPACE_FOOD_DATABASE_USER: ${POSTGRES_USER:-space_food}
+      SPACE_FOOD_DATABASE_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
+      SPACE_FOOD_AUTH_JWTSECRET: ${JWT_SECRET:-change-this-secret-in-production}
+      SPACE_FOOD_LOGGING_LEVEL: ${LOG_LEVEL:-info}
+    ports:
+      - "8080:8080"
+    volumes:
+      - backend_uploads:/root/uploads
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Caddy reverse proxy (optional)
+  caddy:
+    image: caddy:2-alpine
+    container_name: space-food-caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ../caddy/Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:
+    driver: local
+  backend_uploads:
+    driver: local
+  caddy_data:
+    driver: local
+  caddy_config:
+    driver: local

@@ -1,0 +1,61 @@
+# Space Food Backend Configuration Example
+# Copy this file to config.yaml and adjust the values
+
+server:
+  host: "0.0.0.0"
+  port: 8080
+  environment: "development"  # development, staging, production
+
+database:
+  type: "postgres"  # postgres, sqlite, supabase
+  host: "localhost"
+  port: 5432
+  name: "space_food"
+  user: "postgres"
+  password: "changeme"
+  sslmode: "disable"
+  maxconns: 25
+  minconns: 5
+  # For SQLite:
+  # sqlitepath: "./data/space_food.db"
+
+auth:
+  type: "argon2"  # argon2, oauth, supabase
+  jwtsecret: "change-this-to-a-long-random-string"
+  jwtexpiry: 15  # minutes
+  refreshexpiry: 7  # days
+  argon2memory: 65536
+  argon2time: 3
+  argon2threads: 4
+
+ai:
+  defaultprovider: "ollama"  # ollama, openai, gemini, claude
+  ollama:
+    enabled: true
+    host: "http://localhost:11434"
+    model: "llama2"
+  openai:
+    enabled: false
+    apikey: "your-openai-api-key"
+    model: "gpt-3.5-turbo"
+  gemini:
+    enabled: false
+    apikey: "your-gemini-api-key"
+    model: "gemini-pro"
+  claude:
+    enabled: false
+    apikey: "your-claude-api-key"
+    model: "claude-3-sonnet-20240229"
+
+storage:
+  type: "local"  # local, s3
+  localpath: "./uploads"
+  # For S3:
+  # s3bucket: "space-food-uploads"
+  # s3region: "us-east-1"
+  # s3key: "your-access-key"
+  # s3secret: "your-secret-key"
+
+logging:
+  level: "info"  # debug, info, warn, error
+  format: "json"  # json, console
