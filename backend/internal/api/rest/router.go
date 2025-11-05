@@ -34,6 +34,7 @@ import (
 	"github.com/rghsoftware/space-food/internal/features/household"
 	"github.com/rghsoftware/space-food/internal/features/ai_recipes"
 	"github.com/rghsoftware/space-food/internal/features/ai_meal_planning"
+	"github.com/rghsoftware/space-food/internal/features/meal_reminders"
 	"github.com/rghsoftware/space-food/internal/database"
 	"github.com/rghsoftware/space-food/internal/middleware"
 	"github.com/rghsoftware/space-food/internal/storage"
@@ -112,6 +113,12 @@ func SetupRouter(db database.Database, authProvider auth.AuthProvider, aiService
 	householdHandler := household.NewHandler(db)
 	householdGroup := protected.Group("/households")
 	householdHandler.RegisterRoutes(householdGroup)
+
+	// Meal reminders and logging routes
+	mealReminderRepo := meal_reminders.NewRepository(db.DB())
+	mealReminderService := meal_reminders.NewService(mealReminderRepo)
+	mealReminderHandler := meal_reminders.NewHandler(mealReminderService)
+	mealReminderHandler.RegisterRoutes(protected)
 
 	// AI-powered features (if AI service is available)
 	if aiService != nil {
