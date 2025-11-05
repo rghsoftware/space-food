@@ -18,4 +18,5 @@ require (
 	github.com/google/generative-ai-go v0.5.0
 	github.com/PuerkitoBio/goquery v1.9.1
 	github.com/go-resty/resty/v2 v2.12.0
+	github.com/aws/aws-sdk-go v1.50.36
 )

@@ -75,6 +75,16 @@ type Database interface {
 	GetNutritionLog(ctx context.Context, userID string, date time.Time) ([]*NutritionLog, error)
 	ListNutritionLogs(ctx context.Context, filter NutritionFilter) ([]*NutritionLog, error)
 
+	// Household operations
+	CreateHousehold(ctx context.Context, household *Household) error
+	GetHouseholdByID(ctx context.Context, id string) (*Household, error)
+	UpdateHousehold(ctx context.Context, household *Household) error
+	DeleteHousehold(ctx context.Context, id string) error
+	AddHouseholdMember(ctx context.Context, member *HouseholdMember) error
+	RemoveHouseholdMember(ctx context.Context, householdID, userID string) error
+	ListHouseholdMembers(ctx context.Context, householdID string) ([]*HouseholdMember, error)
+	GetUserHouseholds(ctx context.Context, userID string) ([]*Household, error)
+
 	// Full-text search
 	SearchFullText(ctx context.Context, query string, entityType string) ([]interface{}, error)
 }
@@ -93,6 +103,7 @@ type User struct {
 	PasswordHash   string
 	FirstName      string
 	LastName       string
+	DefaultHouseholdID *string
 	CreatedAt      time.Time
 	UpdatedAt      time.Time
 	LastLoginAt    *time.Time
@@ -100,10 +111,29 @@ type User struct {
 	Active         bool
 }
 
+// Household represents a family or shared group
+type Household struct {
+	ID          string
+	Name        string
+	Description string
+	OwnerID     string
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
+}
+
+// HouseholdMember represents a user's membership in a household
+type HouseholdMember struct {
+	HouseholdID string
+	UserID      string
+	Role        string // owner, admin, member
+	JoinedAt    time.Time
+}
+
 // Recipe represents a recipe
 type Recipe struct {
 	ID              string
 	UserID          string
+	HouseholdID     *string
 	Title           string
 	Description     string
 	Instructions    string
@@ -150,6 +180,7 @@ type NutritionInfo struct {
 type MealPlan struct {
 	ID          string
 	UserID      string
+	HouseholdID *string
 	Title       string
 	Description string
 	StartDate   time.Time
@@ -174,6 +205,7 @@ type PlannedMeal struct {
 type PantryItem struct {
 	ID             string
 	UserID         string
+	HouseholdID    *string
 	Name           string
 	Quantity       float64
 	Unit           string
@@ -189,17 +221,18 @@ type PantryItem struct {
 
 // ShoppingListItem represents an item on a shopping list
 type ShoppingListItem struct {
-	ID        string
-	UserID    string
-	Name      string
-	Quantity  float64
-	Unit      string
-	Category  string
-	Notes     string
-	Completed bool
-	RecipeID  *string
-	CreatedAt time.Time
-	UpdatedAt time.Time
+	ID          string
+	UserID      string
+	HouseholdID *string
+	Name        string
+	Quantity    float64
+	Unit        string
+	Category    string
+	Notes       string
+	Completed   bool
+	RecipeID    *string
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
 }
 
 // NutritionLog represents a nutrition tracking entry

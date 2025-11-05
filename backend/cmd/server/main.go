@@ -26,6 +26,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/rghsoftware/space-food/internal/ai"
 	"github.com/rghsoftware/space-food/internal/api/rest"
 	"github.com/rghsoftware/space-food/internal/auth/argon2"
 	"github.com/rghsoftware/space-food/internal/config"
@@ -71,8 +72,18 @@ func main() {
 	// Initialize authentication provider
 	authProvider := argon2.NewArgon2AuthProvider(db, cfg)
 
+	// Initialize AI provider (optional)
+	var aiService *ai.Service
+	aiProvider, err := ai.NewProvider(ctx, cfg)
+	if err != nil {
+		log.Warn().Err(err).Msg("AI provider not available, AI features will be disabled")
+	} else {
+		aiService = ai.NewService(aiProvider)
+		log.Info().Str("provider", aiProvider.GetName()).Msg("AI provider initialized")
+	}
+
 	// Setup router
-	router := rest.SetupRouter(db, authProvider)
+	router := rest.SetupRouter(db, authProvider, aiService, cfg)
 
 	// Start server
 	addr := fmt.Sprintf("%s:%d", cfg.Server.Host, cfg.Server.Port)

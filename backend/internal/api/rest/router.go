@@ -22,16 +22,34 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/rghsoftware/space-food/internal/ai"
 	"github.com/rghsoftware/space-food/internal/auth"
+	"github.com/rghsoftware/space-food/internal/config"
 	authfeature "github.com/rghsoftware/space-food/internal/features/auth"
 	"github.com/rghsoftware/space-food/internal/features/recipes"
+	"github.com/rghsoftware/space-food/internal/features/meal_planning"
+	"github.com/rghsoftware/space-food/internal/features/pantry"
+	"github.com/rghsoftware/space-food/internal/features/shopping_list"
+	"github.com/rghsoftware/space-food/internal/features/nutrition"
+	"github.com/rghsoftware/space-food/internal/features/household"
+	"github.com/rghsoftware/space-food/internal/features/ai_recipes"
+	"github.com/rghsoftware/space-food/internal/features/ai_meal_planning"
 	"github.com/rghsoftware/space-food/internal/database"
 	"github.com/rghsoftware/space-food/internal/middleware"
+	"github.com/rghsoftware/space-food/internal/storage"
+	"github.com/rghsoftware/space-food/pkg/logger"
 )
 
 // SetupRouter sets up the API router
-func SetupRouter(db database.Database, authProvider auth.AuthProvider) *gin.Engine {
+func SetupRouter(db database.Database, authProvider auth.AuthProvider, aiService *ai.Service, cfg *config.Config) *gin.Engine {
 	router := gin.Default()
+
+	// Initialize storage provider
+	log := logger.Get()
+	storageProvider, err := storage.NewProvider(cfg)
+	if err != nil {
+		log.Fatal().Err(err).Msg("Failed to initialize storage provider")
+	}
 
 	// Health check endpoint
 	router.GET("/health", func(c *gin.Context) {
@@ -61,15 +79,54 @@ func SetupRouter(db database.Database, authProvider auth.AuthProvider) *gin.Engi
 	protected.Use(middleware.AuthMiddleware(authProvider))
 
 	// Recipe routes
-	recipeHandler := recipes.NewHandler(db)
+	recipeHandler := recipes.NewHandler(db, storageProvider)
 	recipeGroup := protected.Group("/recipes")
 	recipeHandler.RegisterRoutes(recipeGroup)
 
-	// Additional feature routes will be added here:
-	// - Meal plans
-	// - Pantry
-	// - Shopping lists
-	// - Nutrition tracking
+	// Serve static files for uploaded images (if using local storage)
+	if cfg.Storage.Type == "local" {
+		router.Static("/uploads", cfg.Storage.LocalPath)
+	}
+
+	// Meal planning routes
+	mealPlanningHandler := meal_planning.NewHandler(db)
+	mealPlanGroup := protected.Group("/meal-plans")
+	mealPlanningHandler.RegisterRoutes(mealPlanGroup)
+
+	// Pantry routes
+	pantryHandler := pantry.NewHandler(db)
+	pantryGroup := protected.Group("/pantry")
+	pantryHandler.RegisterRoutes(pantryGroup)
+
+	// Shopping list routes
+	shoppingListHandler := shopping_list.NewHandler(db)
+	shoppingListGroup := protected.Group("/shopping-list")
+	shoppingListHandler.RegisterRoutes(shoppingListGroup)
+
+	// Nutrition tracking routes
+	nutritionHandler := nutrition.NewHandler(db, cfg)
+	nutritionGroup := protected.Group("/nutrition")
+	nutritionHandler.RegisterRoutes(nutritionGroup)
+
+	// Household routes
+	householdHandler := household.NewHandler(db)
+	householdGroup := protected.Group("/households")
+	householdHandler.RegisterRoutes(householdGroup)
+
+	// AI-powered features (if AI service is available)
+	if aiService != nil {
+		aiGroup := protected.Group("/ai")
+
+		// AI recipe features
+		aiRecipeHandler := ai_recipes.NewHandler(aiService)
+		aiRecipeGroup := aiGroup.Group("/recipes")
+		aiRecipeHandler.RegisterRoutes(aiRecipeGroup)
+
+		// AI meal planning features
+		aiMealPlanHandler := ai_meal_planning.NewHandler(aiService)
+		aiMealPlanGroup := aiGroup.Group("/meal-planning")
+		aiMealPlanHandler.RegisterRoutes(aiMealPlanGroup)
+	}
 
 	return router
 }

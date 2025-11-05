@@ -27,12 +27,13 @@ import (
 
 // Config represents the application configuration
 type Config struct {
-	Server   ServerConfig
-	Database DatabaseConfig
-	Auth     AuthConfig
-	AI       AIConfig
-	Storage  StorageConfig
-	Logging  LoggingConfig
+	Server    ServerConfig
+	Database  DatabaseConfig
+	Auth      AuthConfig
+	AI        AIConfig
+	Nutrition NutritionConfig
+	Storage   StorageConfig
+	Logging   LoggingConfig
 }
 
 // ServerConfig contains server-related configuration
@@ -77,6 +78,11 @@ type AIConfig struct {
 	OpenAI          OpenAIConfig
 	Gemini          GeminiConfig
 	Claude          ClaudeConfig
+}
+
+// NutritionConfig contains nutrition-related configuration
+type NutritionConfig struct {
+	USDAAPIKey string
 }
 
 // OllamaConfig for Ollama AI provider
