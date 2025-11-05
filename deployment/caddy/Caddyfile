@@ -1,0 +1,22 @@
+# Caddyfile for Space Food reverse proxy
+
+{
+    # Global options
+    admin off
+}
+
+# Replace with your domain
+:80 {
+    # API routes
+    handle /api/* {
+        reverse_proxy backend:8080
+    }
+
+    # Health check
+    handle /health {
+        reverse_proxy backend:8080
+    }
+
+    # Default response
+    respond "Space Food API" 200
+}
