@@ -93,10 +93,27 @@ class HomeScreen extends HookConsumerWidget {
             subtitle: 'Family sharing',
             color: Colors.teal,
             onTap: () {
-              // TODO: Navigate to household
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Household feature coming soon')),
-              );
+              context.push('/households');
+            },
+          ),
+          _buildFeatureCard(
+            context,
+            icon: Icons.auto_awesome,
+            title: 'AI Recipes',
+            subtitle: 'Get AI suggestions',
+            color: Colors.deepPurple,
+            onTap: () {
+              context.push('/ai/recipe-suggest');
+            },
+          ),
+          _buildFeatureCard(
+            context,
+            icon: Icons.psychology,
+            title: 'AI Meal Plans',
+            subtitle: 'Generate with AI',
+            color: Colors.indigo,
+            onTap: () {
+              context.push('/ai/meal-plan-generate');
             },
           ),
         ],

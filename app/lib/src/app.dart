@@ -15,6 +15,10 @@ import 'presentation/meal_planning/meal_planning_screen.dart';
 import 'presentation/pantry/pantry_screen.dart';
 import 'presentation/shopping/shopping_list_screen.dart';
 import 'presentation/nutrition/nutrition_screen.dart';
+import 'presentation/household/households_screen.dart';
+import 'presentation/household/household_detail_screen.dart';
+import 'presentation/ai/ai_recipe_suggest_screen.dart';
+import 'presentation/ai/ai_meal_plan_generate_screen.dart';
 import 'presentation/providers/auth_provider.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
@@ -86,6 +90,25 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/nutrition',
         builder: (context, state) => const NutritionScreen(),
+      ),
+      GoRoute(
+        path: '/households',
+        builder: (context, state) => const HouseholdsScreen(),
+      ),
+      GoRoute(
+        path: '/households/:id',
+        builder: (context, state) {
+          final id = state.pathParameters['id']!;
+          return HouseholdDetailScreen(householdId: id);
+        },
+      ),
+      GoRoute(
+        path: '/ai/recipe-suggest',
+        builder: (context, state) => const AiRecipeSuggestScreen(),
+      ),
+      GoRoute(
+        path: '/ai/meal-plan-generate',
+        builder: (context, state) => const AiMealPlanGenerateScreen(),
       ),
     ],
   );
