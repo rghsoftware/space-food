@@ -36,6 +36,7 @@ import (
 	"github.com/rghsoftware/space-food/internal/features/ai_meal_planning"
 	"github.com/rghsoftware/space-food/internal/features/meal_reminders"
 	"github.com/rghsoftware/space-food/internal/features/energy_tracking"
+	"github.com/rghsoftware/space-food/internal/features/cooking_assistant"
 	"github.com/rghsoftware/space-food/internal/database"
 	"github.com/rghsoftware/space-food/internal/middleware"
 	"github.com/rghsoftware/space-food/internal/storage"
@@ -126,6 +127,14 @@ func SetupRouter(db database.Database, authProvider auth.AuthProvider, aiService
 	energyTrackingService := energy_tracking.NewService(energyTrackingRepo)
 	energyTrackingHandler := energy_tracking.NewHandler(energyTrackingService)
 	energyTrackingHandler.RegisterRoutes(protected)
+
+	// AI-Powered Cooking Assistant
+	cookingAssistantRepo := cooking_assistant.NewRepository(db.DB())
+	// Use mock AI service for now; can be replaced with real AI service
+	mockAIService := cooking_assistant.NewMockAIService()
+	cookingAssistantService := cooking_assistant.NewService(cookingAssistantRepo, mockAIService)
+	cookingAssistantHandler := cooking_assistant.NewHandler(cookingAssistantService)
+	cookingAssistantHandler.RegisterRoutes(protected)
 
 	// AI-powered features (if AI service is available)
 	if aiService != nil {
