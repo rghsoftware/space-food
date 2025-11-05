@@ -8,6 +8,8 @@ import 'package:go_router/go_router.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../data/models/recipe.dart';
 import '../providers/recipe_provider.dart';
+import '../providers/kitchen_mode_provider.dart';
+import '../kitchen/kitchen_recipe_view.dart';
 
 class RecipeDetailScreen extends HookConsumerWidget {
   final String recipeId;
@@ -97,6 +99,24 @@ class RecipeDetailScreen extends HookConsumerWidget {
                   ),
           ),
           actions: [
+            IconButton(
+              icon: const Icon(Icons.kitchen),
+              tooltip: 'Kitchen Mode',
+              onPressed: () async {
+                // Enable kitchen mode and navigate to kitchen view
+                final kitchenModeNotifier =
+                    ref.read(kitchenModeStateProvider.notifier);
+                await kitchenModeNotifier.enableKitchenMode();
+
+                if (context.mounted) {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => KitchenRecipeView(recipe: recipe),
+                    ),
+                  );
+                }
+              },
+            ),
             IconButton(
               icon: const Icon(Icons.edit),
               onPressed: () {
