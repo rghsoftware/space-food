@@ -184,6 +184,35 @@ The REST API is available at `/api/v1`. Key endpoints:
 - `GET /api/v1/recipes/:id` - Get recipe
 - `PUT /api/v1/recipes/:id` - Update recipe
 - `DELETE /api/v1/recipes/:id` - Delete recipe
+- `GET /api/v1/recipes/search?q=query` - Search recipes
+
+### Meal Plans
+- `GET /api/v1/meal-plans` - List meal plans
+- `POST /api/v1/meal-plans` - Create meal plan
+- `GET /api/v1/meal-plans/:id` - Get meal plan
+- `PUT /api/v1/meal-plans/:id` - Update meal plan
+- `DELETE /api/v1/meal-plans/:id` - Delete meal plan
+
+### Pantry
+- `GET /api/v1/pantry` - List pantry items
+- `POST /api/v1/pantry` - Create pantry item
+- `GET /api/v1/pantry/:id` - Get pantry item
+- `PUT /api/v1/pantry/:id` - Update pantry item
+- `DELETE /api/v1/pantry/:id` - Delete pantry item
+
+### Shopping List
+- `GET /api/v1/shopping-list` - List shopping list items
+- `POST /api/v1/shopping-list` - Create shopping list item
+- `GET /api/v1/shopping-list/:id` - Get shopping list item
+- `PUT /api/v1/shopping-list/:id` - Update shopping list item
+- `DELETE /api/v1/shopping-list/:id` - Delete shopping list item
+- `PATCH /api/v1/shopping-list/:id/toggle` - Toggle item completed status
+
+### Nutrition Tracking
+- `GET /api/v1/nutrition/logs` - List nutrition logs
+- `GET /api/v1/nutrition/logs/today` - Get today's nutrition logs
+- `POST /api/v1/nutrition/logs` - Create nutrition log
+- `GET /api/v1/nutrition/summary` - Get nutrition summary
 
 ## Development
 
@@ -209,21 +238,28 @@ We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guid
 
 See [implementation-plan.md](implementation-plan.md) for the complete development roadmap.
 
-### Current Status: Phase 1 (Foundation)
+### Current Status: Phase 2 (Core Features)
 - ✅ Project structure
 - ✅ Database abstraction layer
 - ✅ Authentication system
-- ✅ Basic API endpoints
+- ✅ Recipe management API (full CRUD with search)
+- ✅ Meal planning API (full CRUD)
+- ✅ Pantry management API
+- ✅ Shopping list API (with toggle functionality)
+- ✅ Nutrition tracking API (with daily summaries)
 - ✅ Flutter project setup
 - 🚧 Recipe management UI
-- 🚧 Meal planning features
+- 🚧 Meal planning calendar UI
+- 🚧 Nutrition dashboard UI
 
-### Coming Soon
-- Meal planning and calendar
-- Nutrition tracking
-- AI-powered features
-- Multi-user households
-- Mobile barcode scanning
+### Coming Soon (Phase 3+)
+- AI-powered features (recipe suggestions, meal plan generation)
+- USDA FoodData integration for nutrition data
+- Recipe URL import and web scraping
+- Barcode scanning for pantry items
+- Multi-user households and sharing
+- Real-time sync and conflict resolution
+- Image upload for recipes
 
 ## License
 
