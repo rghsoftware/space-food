@@ -23,12 +23,14 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/rghsoftware/space-food/internal/database"
 )
 
 type PostgresDB struct {
-	pool *pgxpool.Pool
+	pool   *pgxpool.Pool
+	config *pgxpool.Config
 }
 
 // NewPostgresDB creates a new PostgreSQL database instance
@@ -42,13 +44,17 @@ func NewPostgresDB(connString string, maxConns, minConns int) (*PostgresDB, erro
 	config.MaxConns = int32(maxConns)
 	config.MinConns = int32(minConns)
 
-	return &PostgresDB{}, nil // Pool will be created on Connect
+	return &PostgresDB{config: config}, nil
 }
 
 // Connect establishes connection to the database
 func (db *PostgresDB) Connect(ctx context.Context) error {
-	// Connection logic will be implemented
-	return nil
+	pool, err := pgxpool.NewWithConfig(ctx, db.config)
+	if err != nil {
+		return fmt.Errorf("unable to create connection pool: %w", err)
+	}
+	db.pool = pool
+	return db.pool.Ping(ctx)
 }
 
 // Close closes the database connection

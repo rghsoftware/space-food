@@ -25,6 +25,10 @@ import (
 	"github.com/rghsoftware/space-food/internal/auth"
 	authfeature "github.com/rghsoftware/space-food/internal/features/auth"
 	"github.com/rghsoftware/space-food/internal/features/recipes"
+	"github.com/rghsoftware/space-food/internal/features/meal_planning"
+	"github.com/rghsoftware/space-food/internal/features/pantry"
+	"github.com/rghsoftware/space-food/internal/features/shopping_list"
+	"github.com/rghsoftware/space-food/internal/features/nutrition"
 	"github.com/rghsoftware/space-food/internal/database"
 	"github.com/rghsoftware/space-food/internal/middleware"
 )
@@ -65,11 +69,25 @@ func SetupRouter(db database.Database, authProvider auth.AuthProvider) *gin.Engi
 	recipeGroup := protected.Group("/recipes")
 	recipeHandler.RegisterRoutes(recipeGroup)
 
-	// Additional feature routes will be added here:
-	// - Meal plans
-	// - Pantry
-	// - Shopping lists
-	// - Nutrition tracking
+	// Meal planning routes
+	mealPlanningHandler := meal_planning.NewHandler(db)
+	mealPlanGroup := protected.Group("/meal-plans")
+	mealPlanningHandler.RegisterRoutes(mealPlanGroup)
+
+	// Pantry routes
+	pantryHandler := pantry.NewHandler(db)
+	pantryGroup := protected.Group("/pantry")
+	pantryHandler.RegisterRoutes(pantryGroup)
+
+	// Shopping list routes
+	shoppingListHandler := shopping_list.NewHandler(db)
+	shoppingListGroup := protected.Group("/shopping-list")
+	shoppingListHandler.RegisterRoutes(shoppingListGroup)
+
+	// Nutrition tracking routes
+	nutritionHandler := nutrition.NewHandler(db)
+	nutritionGroup := protected.Group("/nutrition")
+	nutritionHandler.RegisterRoutes(nutritionGroup)
 
 	return router
 }
