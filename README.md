@@ -214,6 +214,16 @@ The REST API is available at `/api/v1`. Key endpoints:
 - `POST /api/v1/nutrition/logs` - Create nutrition log
 - `GET /api/v1/nutrition/summary` - Get nutrition summary
 
+### AI-Powered Features (Requires AI provider configuration)
+**AI Recipe Features:**
+- `POST /api/v1/ai/recipes/suggest` - Generate recipe suggestions based on ingredients/requirements
+- `POST /api/v1/ai/recipes/variations` - Generate variations of existing recipes
+- `POST /api/v1/ai/recipes/analyze-nutrition` - AI-powered nutrition analysis
+- `POST /api/v1/ai/recipes/substitutions` - Suggest ingredient substitutions
+
+**AI Meal Planning:**
+- `POST /api/v1/ai/meal-planning/generate` - Generate complete meal plans with AI
+
 ## Development
 
 ### Running Tests
@@ -238,7 +248,7 @@ We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guid
 
 See [implementation-plan.md](implementation-plan.md) for the complete development roadmap.
 
-### Current Status: Phase 2 (Core Features)
+### Current Status: Phase 3 (AI Integration)
 - ✅ Project structure
 - ✅ Database abstraction layer
 - ✅ Authentication system
@@ -247,19 +257,24 @@ See [implementation-plan.md](implementation-plan.md) for the complete developmen
 - ✅ Pantry management API
 - ✅ Shopping list API (with toggle functionality)
 - ✅ Nutrition tracking API (with daily summaries)
+- ✅ AI integration (Ollama, OpenAI, Gemini, Claude)
+- ✅ AI recipe suggestions and variations
+- ✅ AI meal plan generation
+- ✅ AI nutrition analysis
+- ✅ AI ingredient substitutions
 - ✅ Flutter project setup
 - 🚧 Recipe management UI
 - 🚧 Meal planning calendar UI
 - 🚧 Nutrition dashboard UI
 
-### Coming Soon (Phase 3+)
-- AI-powered features (recipe suggestions, meal plan generation)
+### Coming Soon (Phase 4+)
 - USDA FoodData integration for nutrition data
 - Recipe URL import and web scraping
 - Barcode scanning for pantry items
 - Multi-user households and sharing
 - Real-time sync and conflict resolution
 - Image upload for recipes
+- Flutter UI for AI features
 
 ## License
 

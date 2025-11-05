@@ -22,6 +22,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/rghsoftware/space-food/internal/ai"
 	"github.com/rghsoftware/space-food/internal/auth"
 	authfeature "github.com/rghsoftware/space-food/internal/features/auth"
 	"github.com/rghsoftware/space-food/internal/features/recipes"
@@ -29,12 +30,14 @@ import (
 	"github.com/rghsoftware/space-food/internal/features/pantry"
 	"github.com/rghsoftware/space-food/internal/features/shopping_list"
 	"github.com/rghsoftware/space-food/internal/features/nutrition"
+	"github.com/rghsoftware/space-food/internal/features/ai_recipes"
+	"github.com/rghsoftware/space-food/internal/features/ai_meal_planning"
 	"github.com/rghsoftware/space-food/internal/database"
 	"github.com/rghsoftware/space-food/internal/middleware"
 )
 
 // SetupRouter sets up the API router
-func SetupRouter(db database.Database, authProvider auth.AuthProvider) *gin.Engine {
+func SetupRouter(db database.Database, authProvider auth.AuthProvider, aiService *ai.Service) *gin.Engine {
 	router := gin.Default()
 
 	// Health check endpoint
@@ -88,6 +91,21 @@ func SetupRouter(db database.Database, authProvider auth.AuthProvider) *gin.Engi
 	nutritionHandler := nutrition.NewHandler(db)
 	nutritionGroup := protected.Group("/nutrition")
 	nutritionHandler.RegisterRoutes(nutritionGroup)
+
+	// AI-powered features (if AI service is available)
+	if aiService != nil {
+		aiGroup := protected.Group("/ai")
+
+		// AI recipe features
+		aiRecipeHandler := ai_recipes.NewHandler(aiService)
+		aiRecipeGroup := aiGroup.Group("/recipes")
+		aiRecipeHandler.RegisterRoutes(aiRecipeGroup)
+
+		// AI meal planning features
+		aiMealPlanHandler := ai_meal_planning.NewHandler(aiService)
+		aiMealPlanGroup := aiGroup.Group("/meal-planning")
+		aiMealPlanHandler.RegisterRoutes(aiMealPlanGroup)
+	}
 
 	return router
 }
