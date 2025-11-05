@@ -4,14 +4,15 @@
 
 import 'dart:async';
 import 'package:flutter/services.dart';
+import 'package:wakelock_plus/wakelock_plus.dart';
+import 'package:screen_brightness/screen_brightness.dart';
 
 /// Service for managing kitchen mode features
 /// Handles screen wake lock, brightness control, and haptic feedback
 class KitchenModeService {
-  static const _platform = MethodChannel('com.rghsoftware.spacefood/kitchen');
-
   bool _isScreenOnLocked = false;
   double? _originalBrightness;
+  final _screenBrightness = ScreenBrightness();
 
   /// Enable kitchen mode with screen wake lock and brightness
   Future<void> enableKitchenMode({double? brightness}) async {
@@ -25,8 +26,7 @@ class KitchenModeService {
   Future<void> disableKitchenMode() async {
     await disableScreenWakeLock();
     if (_originalBrightness != null) {
-      await setBrightness(_originalBrightness!);
-      _originalBrightness = null;
+      await resetBrightness();
     }
   }
 
@@ -35,8 +35,7 @@ class KitchenModeService {
     if (_isScreenOnLocked) return;
 
     try {
-      // Note: This will require wakelock_plus package
-      // Implementation will use WakelockPlus.enable()
+      await WakelockPlus.enable();
       _isScreenOnLocked = true;
     } catch (e) {
       print('Failed to enable screen wake lock: $e');
@@ -48,8 +47,7 @@ class KitchenModeService {
     if (!_isScreenOnLocked) return;
 
     try {
-      // Note: This will require wakelock_plus package
-      // Implementation will use WakelockPlus.disable()
+      await WakelockPlus.disable();
       _isScreenOnLocked = false;
     } catch (e) {
       print('Failed to disable screen wake lock: $e');
@@ -64,9 +62,7 @@ class KitchenModeService {
         _originalBrightness = await getBrightness();
       }
 
-      // Note: This will require screen_brightness package
-      // Implementation will use ScreenBrightness().setScreenBrightness(brightness)
-      await _platform.invokeMethod('setBrightness', {'brightness': brightness});
+      await _screenBrightness.setScreenBrightness(brightness);
     } catch (e) {
       print('Failed to set brightness: $e');
     }
@@ -75,10 +71,8 @@ class KitchenModeService {
   /// Get current screen brightness
   Future<double> getBrightness() async {
     try {
-      // Note: This will require screen_brightness package
-      // Implementation will use ScreenBrightness().current
-      final result = await _platform.invokeMethod('getBrightness');
-      return result as double? ?? 0.5;
+      final brightness = await _screenBrightness.current;
+      return brightness;
     } catch (e) {
       print('Failed to get brightness: $e');
       return 0.5;
@@ -88,9 +82,7 @@ class KitchenModeService {
   /// Reset brightness to system default
   Future<void> resetBrightness() async {
     try {
-      // Note: This will require screen_brightness package
-      // Implementation will use ScreenBrightness().resetScreenBrightness()
-      await _platform.invokeMethod('resetBrightness');
+      await _screenBrightness.resetScreenBrightness();
       _originalBrightness = null;
     } catch (e) {
       print('Failed to reset brightness: $e');

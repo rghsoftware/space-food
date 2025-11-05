@@ -5,6 +5,7 @@
 import 'dart:async';
 import 'package:uuid/uuid.dart';
 import '../../data/models/kitchen_mode.dart';
+import 'notification_service.dart';
 
 /// Service for managing kitchen timers
 class KitchenTimerService {
@@ -12,6 +13,7 @@ class KitchenTimerService {
   final _timerControllers = <String, StreamController<KitchenTimer>>{};
   final _timerSubscriptions = <String, Timer>{};
   final _uuid = const Uuid();
+  final _notificationService = NotificationService();
 
   /// Stream of all active timers
   Stream<List<KitchenTimer>> get timersStream =>
@@ -165,8 +167,11 @@ class KitchenTimerService {
     );
     _timerControllers[id]?.add(_timers[id]!);
 
-    // Note: This would typically trigger a notification and haptic feedback
-    // Implementation would use local_notifications package
+    // Show notification
+    _notificationService.showTimerComplete(
+      timerId: id,
+      timerLabel: timer.label,
+    );
   }
 
   /// Dispose all resources
