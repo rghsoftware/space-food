@@ -1,0 +1,171 @@
+/// Space Food - Self-Hosted Meal Planning Application
+/// Copyright (C) 2025 RGH Software
+/// Licensed under AGPL-3.0
+
+import 'package:flutter/material.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import '../providers/auth_provider.dart';
+
+class HomeScreen extends HookConsumerWidget {
+  const HomeScreen({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final user = ref.watch(currentUserProvider);
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Space Food'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout),
+            onPressed: () async {
+              await ref.read(authRepositoryProvider).logout();
+              ref.read(currentUserProvider.notifier).state = null;
+              if (context.mounted) {
+                context.go('/login');
+              }
+            },
+          ),
+        ],
+      ),
+      body: GridView.count(
+        crossAxisCount: 2,
+        padding: const EdgeInsets.all(16),
+        mainAxisSpacing: 16,
+        crossAxisSpacing: 16,
+        children: [
+          _buildFeatureCard(
+            context,
+            icon: Icons.restaurant_menu,
+            title: 'Recipes',
+            subtitle: 'Browse and manage recipes',
+            color: Colors.orange,
+            onTap: () {
+              // TODO: Navigate to recipes
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Recipes feature coming soon')),
+              );
+            },
+          ),
+          _buildFeatureCard(
+            context,
+            icon: Icons.calendar_today,
+            title: 'Meal Plans',
+            subtitle: 'Plan your meals',
+            color: Colors.blue,
+            onTap: () {
+              // TODO: Navigate to meal plans
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Meal Plans feature coming soon')),
+              );
+            },
+          ),
+          _buildFeatureCard(
+            context,
+            icon: Icons.inventory,
+            title: 'Pantry',
+            subtitle: 'Track your ingredients',
+            color: Colors.green,
+            onTap: () {
+              // TODO: Navigate to pantry
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Pantry feature coming soon')),
+              );
+            },
+          ),
+          _buildFeatureCard(
+            context,
+            icon: Icons.shopping_cart,
+            title: 'Shopping',
+            subtitle: 'Your shopping lists',
+            color: Colors.purple,
+            onTap: () {
+              // TODO: Navigate to shopping
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Shopping feature coming soon')),
+              );
+            },
+          ),
+          _buildFeatureCard(
+            context,
+            icon: Icons.analytics,
+            title: 'Nutrition',
+            subtitle: 'Track your nutrition',
+            color: Colors.red,
+            onTap: () {
+              // TODO: Navigate to nutrition
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Nutrition feature coming soon')),
+              );
+            },
+          ),
+          _buildFeatureCard(
+            context,
+            icon: Icons.people,
+            title: 'Household',
+            subtitle: 'Family sharing',
+            color: Colors.teal,
+            onTap: () {
+              // TODO: Navigate to household
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Household feature coming soon')),
+              );
+            },
+          ),
+        ],
+      ),
+      bottomNavigationBar: user != null
+          ? Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Text(
+                'Welcome, ${user.firstName} ${user.lastName}!',
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
+            )
+          : null,
+    );
+  }
+
+  Widget _buildFeatureCard(
+    BuildContext context, {
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return Card(
+      elevation: 2,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, size: 48, color: color),
+              const SizedBox(height: 12),
+              Text(
+                title,
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 4),
+              Text(
+                subtitle,
+                style: Theme.of(context).textTheme.bodySmall,
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
