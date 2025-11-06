@@ -1,0 +1,109 @@
+run:
+  timeout: 10m
+  tests: true
+  modules-download-mode: readonly
+
+output:
+  format: colored-line-number
+  print-issued-lines: true
+  print-linter-name: true
+
+linters:
+  enable:
+    - errcheck      # Check for unchecked errors
+    - gosimple      # Simplify code
+    - govet         # Vet examines Go source code
+    - ineffassign   # Detect ineffectual assignments
+    - staticcheck   # Static analysis
+    - unused        # Check for unused code
+    - gofmt         # Check formatting
+    - goimports     # Check import formatting
+    - misspell      # Check for misspelled words
+    - goconst       # Find repeated strings
+    - gocyclo       # Check cyclomatic complexity
+    - dupl          # Check for duplicate code
+    - gosec         # Security audit
+    - unconvert     # Remove unnecessary type conversions
+    - prealloc      # Find slice declarations that could be preallocated
+    - revive        # Fast linter
+    - stylecheck    # Style check
+    - exportloopref # Check for loop variable capture
+    - nilerr        # Find code that returns nil even if it checks error
+    - nilnil        # Checks returning (nil, nil)
+    - errorlint     # Error wrapping
+    - whitespace    # Check for unnecessary whitespace
+
+linters-settings:
+  errcheck:
+    check-blank: true
+    check-type-assertions: true
+
+  gocyclo:
+    min-complexity: 15
+
+  goconst:
+    min-len: 3
+    min-occurrences: 3
+
+  gosec:
+    excludes:
+      - G104  # Unhandled errors (covered by errcheck)
+      - G304  # File path traversal (many false positives)
+
+  revive:
+    rules:
+      - name: exported
+        severity: warning
+        disabled: false
+      - name: var-naming
+        severity: warning
+        disabled: false
+      - name: package-comments
+        severity: warning
+        disabled: false
+      - name: error-strings
+        severity: warning
+        disabled: false
+      - name: error-naming
+        severity: warning
+        disabled: false
+
+  stylecheck:
+    checks: ["all"]
+
+  misspell:
+    locale: US
+    ignore-words:
+      - cancelled  # British spelling sometimes used
+      - colour     # British spelling sometimes used
+
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0
+
+  exclude-rules:
+    # Exclude test files from certain linters
+    - path: _test\.go
+      linters:
+        - gocyclo
+        - errcheck
+        - dupl
+        - gosec
+
+    # Exclude generated files
+    - path: \.pb\.go$
+      linters:
+        - all
+
+    # Exclude mock files
+    - path: mock_.*\.go
+      linters:
+        - all
+
+    # Specific exclusions for food variety feature
+    - path: backend/internal/features/food_variety/
+      text: "cognitive complexity"
+      linters:
+        - gocognit
+
+  exclude-use-default: false

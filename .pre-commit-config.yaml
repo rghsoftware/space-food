@@ -1,0 +1,115 @@
+# Pre-commit hooks for Space Food
+# Install: pre-commit install
+# Run manually: pre-commit run --all-files
+
+repos:
+  # General file checks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-json
+      - id: check-added-large-files
+        args: ['--maxkb=1000']
+      - id: check-merge-conflict
+      - id: check-case-conflict
+      - id: mixed-line-ending
+      - id: detect-private-key
+
+  # Go formatting and linting
+  - repo: https://github.com/dnephin/pre-commit-golang
+    rev: v0.5.1
+    hooks:
+      - id: go-fmt
+        args: ['-w', '-s']
+      - id: go-vet
+        args: []
+      - id: go-imports
+        args: ['-w']
+      - id: go-unit-tests
+        args: ['-short']
+      - id: go-build
+      - id: go-mod-tidy
+
+  # Security checks
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.18.1
+    hooks:
+      - id: gitleaks
+
+  # Markdown linting
+  - repo: https://github.com/igorshubovych/markdownlint-cli
+    rev: v0.38.0
+    hooks:
+      - id: markdownlint
+        args: ['--fix']
+
+  # YAML linting
+  - repo: https://github.com/adrienverge/yamllint
+    rev: v1.33.0
+    hooks:
+      - id: yamllint
+        args: ['-d', 'relaxed']
+
+  # Dart/Flutter formatting
+  - repo: local
+    hooks:
+      - id: flutter-format
+        name: Flutter Format
+        entry: bash -c 'cd app && flutter format lib/ test/'
+        language: system
+        files: \.dart$
+        pass_filenames: false
+
+      - id: flutter-analyze
+        name: Flutter Analyze
+        entry: bash -c 'cd app && flutter analyze'
+        language: system
+        files: \.dart$
+        pass_filenames: false
+
+  # ADHD-Friendly Design Checks
+  - repo: local
+    hooks:
+      - id: check-judgmental-language
+        name: Check for Judgmental Language
+        entry: bash -c '
+          VIOLATIONS=0
+          BANNED_WORDS=("should not" "must not" "bad food" "problem food" "unhealthy" "fix your")
+          for word in "${BANNED_WORDS[@]}"; do
+            if git diff --cached --name-only | xargs grep -l --include="*.go" --include="*.dart" -i "$word" 2>/dev/null; then
+              echo "Found judgmental language: $word"
+              VIOLATIONS=$((VIOLATIONS + 1))
+            fi
+          done
+          if [ $VIOLATIONS -gt 0 ]; then
+            echo "Please review ADHD-friendly design principles"
+            exit 1
+          fi
+        '
+        language: system
+        files: \.(go|dart)$
+        stages: [commit]
+
+      - id: check-license-headers
+        name: Check License Headers
+        entry: bash -c '
+          for file in $(git diff --cached --name-only --diff-filter=ACM | grep -E "\.(go|dart)$"); do
+            if ! grep -q "AGPL-3.0\|GNU Affero General Public License" "$file"; then
+              echo "Missing license header: $file"
+              exit 1
+            fi
+          done
+        '
+        language: system
+        files: \.(go|dart)$
+        stages: [commit]
+
+  # Commit message linting
+  - repo: https://github.com/compilerla/conventional-pre-commit
+    rev: v3.0.0
+    hooks:
+      - id: conventional-pre-commit
+        stages: [commit-msg]

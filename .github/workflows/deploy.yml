@@ -1,0 +1,124 @@
+name: Deploy
+
+on:
+  push:
+    tags: [ 'v*.*.*' ]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        type: choice
+        options:
+          - staging
+          - production
+
+jobs:
+  deploy-staging:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    if: github.event.inputs.environment == 'staging' || (startsWith(github.ref, 'refs/tags/v') && contains(github.ref, 'beta'))
+    environment:
+      name: staging
+      url: https://staging.spacefood.example.com
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Deploy to staging
+        run: |
+          echo "Deploying to staging environment..."
+          # Add your staging deployment commands here
+          # Examples:
+          # - kubectl apply -f k8s/staging/
+          # - helm upgrade space-food ./charts/space-food -n staging
+          # - ssh deploy@staging "cd /app && docker-compose pull && docker-compose up -d"
+
+  deploy-production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    if: github.event.inputs.environment == 'production' || (startsWith(github.ref, 'refs/tags/v') && !contains(github.ref, 'beta'))
+    environment:
+      name: production
+      url: https://spacefood.example.com
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Deploy to production
+        run: |
+          echo "Deploying to production environment..."
+          # Add your production deployment commands here
+
+      - name: Create GitHub Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v1
+        with:
+          generate_release_notes: true
+          draft: false
+          prerelease: ${{ contains(github.ref, 'beta') }}
+
+  database-migration:
+    name: Run Database Migrations
+    runs-on: ubuntu-latest
+    needs: [deploy-staging]
+    if: success()
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run migrations
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          echo "Running database migrations..."
+          # Add migration commands here
+          # docker run --rm -v $(pwd)/backend/internal/database/postgres/migrations:/migrations \
+          #   migrate/migrate:latest -path=/migrations -database="$DATABASE_URL" up
+
+  post-deployment-tests:
+    name: Post-Deployment Smoke Tests
+    runs-on: ubuntu-latest
+    needs: [deploy-staging, database-migration]
+    if: success()
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run smoke tests
+        run: |
+          echo "Running post-deployment smoke tests..."
+          # Add smoke test commands here
+          # curl -f https://staging.spacefood.example.com/health
+          # curl -f https://staging.spacefood.example.com/api/v1/food-variety/analysis
+
+  notify-deployment:
+    name: Notify Deployment Status
+    runs-on: ubuntu-latest
+    needs: [deploy-staging, deploy-production, post-deployment-tests]
+    if: always()
+
+    steps:
+      - name: Send Slack notification
+        uses: slackapi/slack-github-action@v1
+        if: always()
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        with:
+          payload: |
+            {
+              "text": "Deployment Status: ${{ job.status }}",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*Space Food Deployment*\nStatus: ${{ job.status }}\nEnvironment: ${{ github.event.inputs.environment || 'production' }}\nVersion: ${{ github.ref_name }}"
+                  }
+                }
+              ]
+            }

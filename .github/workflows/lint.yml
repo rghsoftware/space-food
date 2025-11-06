@@ -1,0 +1,291 @@
+name: Lint & Code Quality
+
+on:
+  push:
+    branches: [ main, develop, 'claude/**' ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  golangci-lint:
+    name: Go Linting
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+          cache: false
+
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v4
+        with:
+          version: latest
+          working-directory: backend
+          args: --timeout=10m --config=../.golangci.yml
+
+  go-fmt:
+    name: Go Formatting
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+
+      - name: Check gofmt
+        working-directory: backend
+        run: |
+          if [ "$(gofmt -s -l . | wc -l)" -gt 0 ]; then
+            echo "Files need formatting:"
+            gofmt -s -l .
+            exit 1
+          fi
+
+      - name: Check go vet
+        working-directory: backend
+        run: go vet ./...
+
+  flutter-analyze:
+    name: Flutter Analysis
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 'stable'
+          cache: true
+
+      - name: Get dependencies
+        working-directory: app
+        run: flutter pub get
+
+      - name: Run flutter analyze
+        working-directory: app
+        run: flutter analyze --no-fatal-infos
+
+      - name: Check formatting
+        working-directory: app
+        run: dart format --set-exit-if-changed --line-length 80 lib/ test/
+
+  dart-lint:
+    name: Dart Linting
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 'stable'
+          cache: true
+
+      - name: Get dependencies
+        working-directory: app
+        run: flutter pub get
+
+      - name: Run dart analyze
+        working-directory: app
+        run: dart analyze --fatal-infos
+
+  sql-lint:
+    name: SQL Linting
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install sqlfluff
+        run: pip install sqlfluff
+
+      - name: Lint SQL migrations
+        working-directory: backend/internal/database/postgres/migrations
+        run: sqlfluff lint --dialect postgres .
+        continue-on-error: true  # SQL linting can be strict
+
+  markdown-lint:
+    name: Markdown Linting
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run markdownlint
+        uses: DavidAnson/markdownlint-cli2-action@v15
+        with:
+          globs: '**/*.md'
+
+  yaml-lint:
+    name: YAML Linting
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run yamllint
+        uses: ibiqlik/action-yamllint@v3
+        with:
+          file_or_dir: .github/workflows/
+          config_data: |
+            extends: default
+            rules:
+              line-length:
+                max: 120
+                level: warning
+              comments:
+                min-spaces-from-content: 1
+
+  license-check:
+    name: License Headers Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check AGPL-3.0 license headers in Go files
+        working-directory: backend
+        run: |
+          MISSING=0
+          for file in $(find . -name "*.go" -not -path "./vendor/*"); do
+            if ! grep -q "GNU Affero General Public License" "$file"; then
+              echo "Missing license header: $file"
+              MISSING=$((MISSING + 1))
+            fi
+          done
+          if [ $MISSING -gt 0 ]; then
+            echo "$MISSING files missing license headers"
+            exit 1
+          fi
+
+      - name: Check AGPL-3.0 license headers in Dart files
+        working-directory: app
+        run: |
+          MISSING=0
+          for file in $(find lib -name "*.dart"); do
+            if ! grep -q "AGPL-3.0" "$file"; then
+              echo "Missing license header: $file"
+              MISSING=$((MISSING + 1))
+            fi
+          done
+          if [ $MISSING -gt 0 ]; then
+            echo "$MISSING files missing license headers"
+            exit 1
+          fi
+
+  dependency-review:
+    name: Dependency Review
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Dependency Review
+        uses: actions/dependency-review-action@v4
+        with:
+          fail-on-severity: moderate
+
+  code-quality-report:
+    name: Code Quality Report
+    runs-on: ubuntu-latest
+    needs: [golangci-lint, flutter-analyze]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run SonarCloud Scan
+        uses: SonarSource/sonarcloud-github-action@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        continue-on-error: true  # SonarCloud may not be configured
+
+  adhd-friendly-check:
+    name: ADHD-Friendly Design Verification
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check for judgmental language in Go code
+        working-directory: backend/internal/features/food_variety
+        run: |
+          echo "Checking for judgmental language in Go code..."
+          VIOLATIONS=0
+
+          # Words that should NOT appear in user-facing strings
+          BANNED_WORDS=("should not" "must not" "bad food" "problem food" "unhealthy" "fix your")
+
+          for word in "${BANNED_WORDS[@]}"; do
+            if grep -r --include="*.go" -i "$word" .; then
+              echo "Found judgmental language: $word"
+              VIOLATIONS=$((VIOLATIONS + 1))
+            fi
+          done
+
+          if [ $VIOLATIONS -gt 0 ]; then
+            echo "Found $VIOLATIONS violations of non-judgmental language policy"
+            echo "Please review ADHD-friendly design principles"
+            exit 1
+          fi
+
+          echo "✓ No judgmental language found"
+
+      - name: Check for judgmental language in Flutter code
+        working-directory: app/lib/src/features/food_variety
+        run: |
+          echo "Checking for judgmental language in Flutter code..."
+          VIOLATIONS=0
+
+          BANNED_WORDS=("should not" "must not" "bad food" "problem food" "unhealthy eating")
+
+          for word in "${BANNED_WORDS[@]}"; do
+            if grep -r --include="*.dart" -i "$word" . | grep -v "test"; then
+              echo "Found judgmental language: $word"
+              VIOLATIONS=$((VIOLATIONS + 1))
+            fi
+          done
+
+          if [ $VIOLATIONS -gt 0 ]; then
+            echo "Found $VIOLATIONS violations"
+            exit 1
+          fi
+
+          echo "✓ No judgmental language found in UI"
+
+      - name: Verify positive messaging
+        run: |
+          echo "Verifying positive messaging patterns..."
+
+          # Check that positive words are used
+          POSITIVE_WORDS=("okay" "great" "celebrate" "enjoy" "ready")
+          FOUND=0
+
+          for word in "${POSITIVE_WORDS[@]}"; do
+            if grep -r --include="*.go" --include="*.dart" -i "$word" backend/internal/features/food_variety app/lib/src/features/food_variety; then
+              FOUND=$((FOUND + 1))
+            fi
+          done
+
+          echo "✓ Found positive messaging patterns: $FOUND"
